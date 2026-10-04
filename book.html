@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>2026 普瑞 Bridgelux 线型照明产品图册</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0a0a0a;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:#eee; user-select:none; }
+
+  /* 背景氛围光 */
+  body::before {
+    content:""; position:fixed; inset:0;
+    background:radial-gradient(ellipse at 50% 30%, rgba(180,30,30,0.08), transparent 60%),
+               radial-gradient(ellipse at 50% 100%, rgba(200,150,80,0.05), transparent 60%);
+    pointer-events:none; z-index:0;
+  }
+
+  /* 顶栏 */
+  .topbar {
+    position:fixed; top:0; left:0; right:0; z-index:20;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    pointer-events:none;
+  }
+  .topbar .brand { font-size:14px; letter-spacing:2px; opacity:0.85; }
+  .topbar .brand b { color:#d43030; font-weight:600; }
+  .topbar .actions { display:flex; gap:10px; pointer-events:auto; }
+  .btn {
+    width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,0.15);
+    background:rgba(20,20,20,0.6); color:#ddd; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; backdrop-filter:blur(10px); transition:all .2s;
+  }
+  .btn:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.3); }
+
+  /* 翻页舞台 */
+  .stage {
+    position:relative; width:100%; height:100%; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .book {
+    position:relative; height:calc(100vh - 110px);
+    aspect-ratio: 941/1672;
+    max-width: calc(100vw - 24px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+    border-radius:4px; overflow:hidden; background:#000;
+  }
+  .page {
+    position:absolute; inset:0;
+    background:#000 center/contain no-repeat;
+    opacity:0; transform:scale(0.96);
+    transition: opacity .45s ease, transform .45s ease;
+    pointer-events:none;
+  }
+  .page.active { opacity:1; transform:scale(1); pointer-events:auto; z-index:2; }
+  .page.enter-right { animation: slideInR .45s ease; }
+  .page.enter-left  { animation: slideInL .45s ease; }
+  @keyframes slideInR { from { transform:translateX(6%) scale(.97); opacity:.4; } to { transform:translateX(0) scale(1); opacity:1; } }
+  @keyframes slideInL  { from { transform:translateX(-6%) scale(.97); opacity:.4; } to { transform:translateX(0) scale(1); opacity:1; } }
+
+  /* 左右箭头 */
+  .nav {
+    position:fixed; top:50%; transform:translateY(-50%); z-index:15;
+    width:46px; height:46px; border-radius:50%;
+    background:rgba(20,20,20,0.5); border:1px solid rgba(255,255,255,0.12);
+    color:#fff; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    backdrop-filter:blur(8px); transition:all .2s;
+  }
+  .nav:hover { background:rgba(212,48,48,0.7); border-color:transparent; }
+  .nav.prev { left:14px; }
+  .nav.next { right:14px; }
+  .nav:disabled { opacity:0.25; cursor:default; }
+  @media (max-width:768px){ .nav { display:none; } }
+
+  /* 底部控制条 */
+  .bottombar {
+    position:fixed; left:0; right:0; bottom:0; z-index:20;
+    padding:14px 20px 18px;
+    background:linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+    display:flex; flex-direction:column; gap:10px; align-items:center;
+  }
+  .progress {
+    width:min(560px, 80vw); height:3px; border-radius:2px;
+    background:rgba(255,255,255,0.12); position:relative; cursor:pointer;
+  }
+  .progress .fill {
+    position:absolute; left:0; top:0; bottom:0; border-radius:2px;
+    background:linear-gradient(90deg,#d43030,#e8a04a); width:0%;
+    transition:width .2s;
+  }
+  .progress .dot {
+    position:absolute; top:50%; width:11px; height:11px; border-radius:50%;
+    background:#fff; transform:translate(-50%,-50%);
+    box-shadow:0 0 8px rgba(212,48,48,0.8); left:0%;
+    transition:left .2s;
+  }
+  .pageno { font-size:12px; letter-spacing:2px; color:rgba(255,255,255,0.6); font-variant-numeric:tabular-nums; }
+  .pageno b { color:#fff; font-weight:500; }
+
+  /* 目录抽屉 */
+  .toc-mask {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:30;
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+  .toc-mask.open { opacity:1; pointer-events:auto; }
+  .toc {
+    position:fixed; top:0; right:0; bottom:0; width:min(340px,85vw); z-index:31;
+    background:#141414; border-left:1px solid rgba(255,255,255,0.08);
+    transform:translateX(100%); transition:transform .35s cubic-bezier(.2,.8,.2,1);
+    display:flex; flex-direction:column;
+  }
+  .toc.open { transform:translateX(0); }
+  .toc-head {
+    padding:20px; border-bottom:1px solid rgba(255,255,255,0.08);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .toc-head h3 { font-size:15px; font-weight:500; letter-spacing:1px; }
+  .toc-grid {
+    flex:1; overflow-y:auto; padding:16px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px; align-content:start;
+  }
+  .toc-item {
+    cursor:pointer; border-radius:4px; overflow:hidden; position:relative;
+    aspect-ratio:941/1672; background:#222;
+    border:2px solid transparent; transition:border-color .2s;
+  }
+  .toc-item.active { border-color:#d43030; }
+  .toc-item img { width:100%; height:100%; object-fit:cover; display:block; }
+  .toc-item .num {
+    position:absolute; left:4px; bottom:4px; font-size:10px;
+    background:rgba(0,0,0,0.7); padding:1px 5px; border-radius:2px; color:#fff;
+  }
+
+  /* 提示 */
+  .hint {
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+    font-size:11px; color:rgba(255,255,255,0.4); letter-spacing:1px;
+    z-index:10; pointer-events:none; animation:fadeout 1s ease 3s forwards;
+  }
+  @keyframes fadeout { to { opacity:0; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">bridge<b>lux</b> &nbsp;·&nbsp; 2026 产品图册</div>
+  <div class="actions">
+    <button class="btn" id="tocBtn" title="目录">≡</button>
+    <button class="btn" id="fsBtn" title="全屏">⛶</button>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="book" id="book"></div>
+</div>
+
+<button class="nav prev" id="prevBtn" aria-label="上一页">‹</button>
+<button class="nav next" id="nextBtn" aria-label="下一页">›</button>
+
+<div class="bottombar">
+  <div class="progress" id="progress"><div class="fill" id="fill"></div><div class="dot" id="dot"></div></div>
+  <div class="pageno"><b id="cur">1</b> / <span id="total">66</span></div>
+</div>
+
+<div class="hint">左右滑动 / 点击两侧 / 方向键翻页</div>
+
+<div class="toc-mask" id="tocMask"></div>
+<div class="toc" id="toc">
+  <div class="toc-head"><h3>目录 · 缩略图</h3><button class="btn" id="tocClose">✕</button></div>
+  <div class="toc-grid" id="tocGrid"></div>
+</div>
+
+<script>
+const TOTAL = 66;
+const pages = [];
+for (let i=1;i<=TOTAL;i++) pages.push('pages/p'+String(i).padStart(2,'0')+'.png');
+
+let cur = 0;
+const book = document.getElementById('book');
+const curEl = document.getElementById('cur');
+const totalEl = document.getElementById('total');
+const fill = document.getElementById('fill');
+const dot = document.getElementById('dot');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+// 预生成两层页（当前+下一页缓冲）
+let layers = [];
+function makeLayer(dir){
+  const d = document.createElement('div');
+  d.className = 'page';
+  book.appendChild(d);
+  layers.push(d);
+  return d;
+}
+const layerA = makeLayer();
+const layerB = makeLayer();
+
+function show(idx, dir /* +1 next, -1 prev, 0 jump */){
+  idx = Math.max(0, Math.min(TOTAL-1, idx));
+  if (idx === cur && layers[0].style.backgroundImage) return;
+  const incoming = (dir >= 0) ? layerB : layerA;
+  const outgoing = (dir >= 0) ? layerA : layerB;
+  // 预加载
+  incoming.style.backgroundImage = `url('${pages[idx]}')`;
+  incoming.classList.remove('enter-right','enter-left','active');
+  // 强制重排
+  void incoming.offsetWidth;
+  if (dir > 0) incoming.classList.add('enter-right');
+  else if (dir < 0) incoming.classList.add('enter-left');
+  incoming.classList.add('active');
+  outgoing.classList.remove('active');
+  cur = idx;
+  // 更新UI
+  curEl.textContent = idx+1;
+  const pct = ((idx+1)/TOTAL*100);
+  fill.style.width = pct+'%';
+  dot.style.left = pct+'%';
+  prevBtn.disabled = idx===0;
+  nextBtn.disabled = idx===TOTAL-1;
+  // 更新toc
+  document.querySelectorAll('.toc-item').forEach((el,i)=>el.classList.toggle('active', i===idx));
+}
+
+// 初始化
+totalEl.textContent = TOTAL;
+show(0, 0);
+
+// 预加载所有图
+pages.forEach(src=>{ const im=new Image(); im.src=src; });
+
+// 键盘
+document.addEventListener('keydown', e=>{
+  if (e.key==='ArrowRight' || e.key===' ') show(cur+1, +1);
+  if (e.key==='ArrowLeft') show(cur-1, -1);
+});
+
+// 按钮
+prevBtn.onclick = ()=>show(cur-1,-1);
+nextBtn.onclick = ()=>show(cur+1,+1);
+
+// 进度条点击
+const prog = document.getElementById('progress');
+prog.onclick = (e)=>{
+  const r = prog.getBoundingClientRect();
+  const ratio = (e.clientX - r.left)/r.width;
+  const target = Math.round(ratio*(TOTAL-1));
+  show(target, target>cur?1:-1);
+};
+
+// 触屏滑动
+let tx=0, ty=0, tt=0;
+book.addEventListener('touchstart', e=>{
+  tx=e.touches[0].clientX; ty=e.touches[0].clientY; tt=Date.now();
+},{passive:true});
+book.addEventListener('touchend', e=>{
+  const dx = e.changedTouches[0].clientX - tx;
+  const dy = e.changedTouches[0].clientY - ty;
+  if (Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){
+    if (dx<0) show(cur+1,+1); else show(cur-1,-1);
+  }
+},{passive:true});
+
+// 桌面点击左右半屏翻页
+book.addEventListener('click', e=>{
+  if (e.target.closest('.toc') || e.target.closest('.btn')) return;
+  const r = book.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  if (x > r.width*0.35) show(cur+1,+1);
+  else if (x < r.width*0.30) show(cur-1,-1);
+});
+
+// 全屏
+document.getElementById('fsBtn').onclick = ()=>{
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+};
+
+// 目录
+const toc = document.getElementById('toc');
+const tocMask = document.getElementById('tocMask');
+const tocGrid = document.getElementById('tocGrid');
+pages.forEach((src,i)=>{
+  const item = document.createElement('div');
+  item.className = 'toc-item';
+  item.innerHTML = `<img src="${src}" loading="lazy"><span class="num">${i+1}</span>`;
+  item.onclick = ()=>{ show(i, i>cur?1:-1); closeToc(); };
+  tocGrid.appendChild(item);
+});
+function openToc(){ toc.classList.add('open'); tocMask.classList.add('open'); }
+function closeToc(){ toc.classList.remove('open'); tocMask.classList.remove('open'); }
+document.getElementById('tocBtn').onclick = openToc;
+document.getElementById('tocClose').onclick = closeToc;
+tocMask.onclick = closeToc;
+</script>
+</body>
+</html>
